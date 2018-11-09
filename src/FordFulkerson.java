@@ -18,11 +18,11 @@ public class FordFulkerson {
   private Edge[][] Gf;
 
   /**
-   * Takes in a graph in the form of an NxN integer matrix
+   * Takes in a test in the form of an NxN integer matrix
    * where each cell in the matrix is the capacity of the of the edge
    * from node i to node j where 0 <= i < N and 0 <= j < n.
    *
-   * @param capacities The capacities of the original graph
+   * @param capacities The capacities of the original test
    * */
   public FordFulkerson(int[][] capacities) {
     int n = capacities.length;
@@ -89,27 +89,23 @@ public class FordFulkerson {
   }
 
   private Path bfs(int start, int dest) {
-    Set<Integer> visited = new HashSet<>();
     Queue<Integer> queue = new LinkedList<>();
-    queue.offer(start);
+    Set<Integer> visited = new HashSet<>();
+    List<Integer> traversed = new ArrayList<>();
 
-    Path path = new Path(new ArrayList<>());
-    Integer prev = null;
+    queue.offer(start);
+    visited.add(start);
+
     while (!queue.isEmpty()) {
       int currNode = queue.poll();
-      visited.add(currNode);
-
-      if (prev != null) {
-        Edge edge = this.Gf[prev][currNode]; // edge cannot be null
-        path.append(edge);
-      }
-
-      prev = currNode;
+      traversed.add(currNode);
 
       if (currNode == dest) {
-        return path;
+        List<Edge> edgesTraversed = toEdges(traversed);
+        return new Path(edgesTraversed);
       }
 
+      boolean queueIncreased = false;
       List<Integer> neighbors = neighbors(currNode);
       for (int neighbor : neighbors) {
         Edge edgeToNeighbor = this.Gf[currNode][neighbor];
@@ -119,11 +115,32 @@ public class FordFulkerson {
         // if its not yet visited and there is remaining capacity left for that edge
         if (!visited.contains(neighbor) && !capacityReached) {
           queue.offer(neighbor);
+          visited.add(neighbor);
+          queueIncreased = true;
         }
+      }
+
+      if (!queueIncreased) {
+        traversed.remove(traversed.size() - 1);
       }
     }
 
     return null;
+  }
+
+  private List<Edge> toEdges(List<Integer> traversed) {
+    Integer prev = null;
+    List<Edge> edges = new ArrayList<>();
+
+    for (Integer node : traversed) {
+      if (prev != null) {
+        Edge edge = this.Gf[prev][node];
+        edges.add(edge);
+      }
+
+      prev = node;
+    }
+    return edges;
   }
 
   // Can be optimized if we keep track of neighbors for each iteration in main FF while loop

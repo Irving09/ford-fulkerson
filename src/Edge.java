@@ -99,4 +99,8 @@ public class Edge {
         this.type == EdgeType.FORWARD ? EdgeType.BACKWARD : EdgeType.FORWARD
     );
   }
+
+  public String toString() {
+    return this.src + "->" +  this.dest;
+  }
 }
