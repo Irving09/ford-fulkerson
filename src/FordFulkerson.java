@@ -68,7 +68,8 @@ public class FordFulkerson {
         // update directed edge in opposite direction
         Edge oppositeEdge = this.Gf[edge.dest()][edge.src()];
         if (oppositeEdge == null) {
-          this.Gf[edge.dest()][edge.src()] = edge.opposite();
+          oppositeEdge = edge.opposite();
+          this.Gf[edge.dest()][edge.src()] = oppositeEdge;
         }
 
         oppositeEdge.flowValue(flowValueSoFar);
@@ -101,8 +102,7 @@ public class FordFulkerson {
       traversed.add(currNode);
 
       if (currNode == dest) {
-        List<Edge> edgesTraversed = toEdges(traversed);
-        return new Path(edgesTraversed);
+        return createEdgePath(traversed);
       }
 
       boolean queueIncreased = false;
@@ -128,19 +128,27 @@ public class FordFulkerson {
     return null;
   }
 
-  private List<Edge> toEdges(List<Integer> traversed) {
+  private Path createEdgePath(List<Integer> traversed) {
     Integer prev = null;
     List<Edge> edges = new ArrayList<>();
+    Edge bottleneck = null;
 
     for (Integer node : traversed) {
       if (prev != null) {
         Edge edge = this.Gf[prev][node];
         edges.add(edge);
+
+        if (bottleneck == null) {
+          bottleneck = edge;
+        } else {
+          bottleneck = edge.residualCapacity() < bottleneck.residualCapacity() ? edge : bottleneck;
+        }
       }
 
       prev = node;
     }
-    return edges;
+
+    return new Path(edges, bottleneck);
   }
 
   // Can be optimized if we keep track of neighbors for each iteration in main FF while loop
