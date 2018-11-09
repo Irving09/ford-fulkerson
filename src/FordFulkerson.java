@@ -77,11 +77,15 @@ public class FordFulkerson {
 
     }
 
-    return result
-        .path()
-        .stream()
-        .mapToInt(Edge::flowValue)
-        .sum();
+    int maxFlow = 0;
+    for (Edge[] residualGraph : this.Gf) {
+      Edge sinkEdge = residualGraph[t];
+      if (sinkEdge != null) {
+        maxFlow += sinkEdge.flowValue();
+      }
+    }
+
+    return maxFlow;
   }
 
   private Path bfs(int start, int dest) {
