@@ -55,9 +55,6 @@ public class FordFulkerson {
 
       // Note: edges in augmented path can either be forward or backward flows
       for (Edge edge : augmentedPath.path()) {
-        int flowValueSoFar = edge.flowValue() + flow;
-        // Note: edge.capacity() must be >= flowValueSoFar because of bottleneck found
-
         // update directed edge in opposite direction
         Edge oppositeEdge = this.Gf[edge.dest()][edge.src()];
         if (oppositeEdge == null) {
@@ -65,10 +62,10 @@ public class FordFulkerson {
           this.Gf[edge.dest()][edge.src()] = oppositeEdge;
         }
 
+        // Note: edge.capacity() must be >= flowValueSoFar because of bottleneck found
         // update edge flows both forward and backwards
-        edge.flowValue(flowValueSoFar);
-        oppositeEdge.flowValue(flowValueSoFar);
-        // TODO maybe we dont care about residual capacity for backward edges?
+        edge.flowValue(edge.flowValue() + flow);
+        oppositeEdge.flowValue(oppositeEdge.flowValue() + flow);
       }
 
     }
@@ -77,46 +74,46 @@ public class FordFulkerson {
   }
 
   private Path bfs(int source, int sink) {
-    List<Integer> traversed = new ArrayList<>();
-
-    Set<Integer> visited = new HashSet<>();
     Queue<Integer> queue = new LinkedList<>();
     queue.offer(source);
 
+    int[] parent = new int[this.Gf.length];
+    Arrays.fill(parent, -1);
     while (!queue.isEmpty()) {
       int node = queue.poll();
-      traversed.add(node);
-      visited.add(node);
 
       if (node == sink) {
-        return createEdgePathFrom(traversed);
+        break;
       }
 
-      boolean deadEnd = true;
       for (int neighbor : neighbors(node)) {
         Edge edgeToNeighbor = this.Gf[node][neighbor];
         boolean edgeExists = edgeToNeighbor != null;
+        boolean unvisited = parent[neighbor] == -1;
 
-        if (edgeExists &&
-            unvisited(visited, neighbor) &&
-            edgeToNeighbor.hasLeftOverCapacity()) {
+        if (edgeExists && unvisited && edgeToNeighbor.hasLeftOverCapacity()) {
+          parent[neighbor] = node;
           queue.offer(neighbor);
-          visited.add(neighbor);
-
-          deadEnd = false;
         }
-      }
-
-      if (deadEnd) {
-        traversed.remove(traversed.size() - 1);
       }
     }
 
-    return null;
-  }
+    List<Integer> traversed = new ArrayList<>();
 
-  private boolean unvisited(Set<Integer> visited, int node) {
-    return !visited.contains(node);
+
+    int backtrack = sink;
+    while (parent[backtrack] != -1) {
+      traversed.add(backtrack);
+      backtrack = parent[backtrack];
+    }
+
+    if (backtrack == source) {
+      traversed.add(backtrack);
+      Collections.reverse(traversed);
+      return createEdgePathFrom(traversed);
+    }
+
+    return null;
   }
 
   private Path createEdgePathFrom(List<Integer> traversed) {

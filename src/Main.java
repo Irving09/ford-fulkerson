@@ -1,8 +1,8 @@
 public class Main {
 
     public static void main(String[] args) {
-//        int[][] capacities = test2();
-        int[][] capacities = test1();
+        int[][] capacities = test2();
+//        int[][] capacities = test1();
         FordFulkerson ff = new FordFulkerson(capacities);
 
         int maxFlow = ff.maxFlow();
@@ -28,9 +28,9 @@ public class Main {
         int[][] graph = {
             // S   A   B  C   D   T
       /*S*/ {  0, 16, 0, 13,  0,  0 },
-      /*A*/ {  0,  0,12, 10,  0,  0 },
+      /*A*/ {  0,  0,12,  6,  0,  0 },
       /*B*/ {  0,  0, 0,  9,  0, 20 },
-      /*C*/ {  0,  4, 0,  0, 14,  0 },
+      /*C*/ {  0,  0, 0,  0, 14,  0 },
       /*D*/ {  0,  0, 7,  0,  0,  4 },
       /*T*/ {  0,  0, 0,  0,  0,  0 },
         };
