@@ -49,13 +49,4 @@ public class Path {
     this.min = min;
   }
 
-  public void append(Edge edge) {
-    this.path.add(edge);
-
-    if (this.min == null) {
-      this.min = edge;
-    } else {
-      this.min = edge.residualCapacity() < min.residualCapacity() ? edge : this.min;
-    }
-  }
 }

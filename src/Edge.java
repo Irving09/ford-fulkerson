@@ -21,8 +21,6 @@ public class Edge {
 
   private int capacity;
 
-  private int residualCapacity;
-
   private EdgeType type;
 
   public Edge(int src, int dest, int capacity) {
@@ -38,7 +36,6 @@ public class Edge {
     this.dest = dest;
     this.flowValue = flowValue;
     this.capacity = capacity;
-    this.residualCapacity = capacity;
     this.type = type;
   }
 
@@ -74,20 +71,16 @@ public class Edge {
     this.capacity = capacity;
   }
 
-  public int residualCapacity() {
-    return residualCapacity;
-  }
-
-  public void residualCapacity(int residualCapacity) {
-    this.residualCapacity = residualCapacity;
-  }
-
   public EdgeType type() {
     return type;
   }
 
   public void type(EdgeType type) {
     this.type = type;
+  }
+
+  public boolean hasLeftOverCapacity() {
+    return this.flowValue < this.capacity;
   }
 
   public Edge opposite() {

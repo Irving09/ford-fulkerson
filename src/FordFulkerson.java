@@ -41,29 +41,22 @@ public class FordFulkerson {
 
   public int maxFlow() {
     int n = this.Gf.length;
-    int s = 0;
-    int t = n - 1;
+    int source = 0;
+    int sink = n - 1;
+    int maxFlow = 0;
 
-    Path result = new Path();
-    Path augmentedPath = null;
-    while ((augmentedPath = bfs(s, t)) != null) {
-      // result is set to the last successful path found
-      result = augmentedPath;
+    Path augmentedPath;
+    while ((augmentedPath = bfs(source, sink)) != null) {
 
+      // because bottleneck is min residual capacity for all edges in augmented path
       Edge bottleNeck = augmentedPath.min();
-      int flow = bottleNeck.residualCapacity();
+      int flow = bottleNeck.capacity() - bottleNeck.flowValue();
+      maxFlow += flow;
 
       // Note: edges in augmented path can either be forward or backward flows
       for (Edge edge : augmentedPath.path()) {
         int flowValueSoFar = edge.flowValue() + flow;
-        int remaining = edge.residualCapacity() - flow;
-
-        // Note: remaining is guaranteed >= 0
-        // because bottleneck is min residual capacity for all edges in augmented path
-
-        // update edge's residual capacity
-        edge.residualCapacity(remaining);
-        edge.flowValue(flowValueSoFar);
+        // Note: edge.capacity() must be >= flowValueSoFar because of bottleneck found
 
         // update directed edge in opposite direction
         Edge oppositeEdge = this.Gf[edge.dest()][edge.src()];
@@ -72,55 +65,49 @@ public class FordFulkerson {
           this.Gf[edge.dest()][edge.src()] = oppositeEdge;
         }
 
+        // update edge flows both forward and backwards
+        edge.flowValue(flowValueSoFar);
         oppositeEdge.flowValue(flowValueSoFar);
         // TODO maybe we dont care about residual capacity for backward edges?
       }
 
     }
 
-    int maxFlow = 0;
-    for (Edge[] residualGraph : this.Gf) {
-      Edge sinkEdge = residualGraph[t];
-      if (sinkEdge != null) {
-        maxFlow += sinkEdge.flowValue();
-      }
-    }
-
     return maxFlow;
   }
 
-  private Path bfs(int start, int dest) {
-    Queue<Integer> queue = new LinkedList<>();
-    Set<Integer> visited = new HashSet<>();
+  private Path bfs(int source, int sink) {
     List<Integer> traversed = new ArrayList<>();
 
-    queue.offer(start);
-    visited.add(start);
+    Set<Integer> visited = new HashSet<>();
+    Queue<Integer> queue = new LinkedList<>();
+    queue.offer(source);
 
     while (!queue.isEmpty()) {
-      int currNode = queue.poll();
-      traversed.add(currNode);
+      int node = queue.poll();
+      traversed.add(node);
+      visited.add(node);
 
-      if (currNode == dest) {
-        return createEdgePath(traversed);
+      if (node == sink) {
+        return createEdgePathFrom(traversed);
       }
 
-      boolean queueIncreased = false;
-      List<Integer> neighbors = neighbors(currNode);
-      for (int neighbor : neighbors) {
-        Edge edgeToNeighbor = this.Gf[currNode][neighbor];
-        boolean capacityReached = edgeToNeighbor.flowValue() == edgeToNeighbor.capacity();
+      boolean deadEnd = true;
+      for (int neighbor : neighbors(node)) {
+        Edge edgeToNeighbor = this.Gf[node][neighbor];
+        boolean edgeExists = edgeToNeighbor != null;
 
-        // Note: only set next nodes to be visited
-        // if its not yet visited and there is remaining capacity left for that edge
-        if (!visited.contains(neighbor) && !capacityReached) {
+        if (edgeExists &&
+            unvisited(visited, neighbor) &&
+            edgeToNeighbor.hasLeftOverCapacity()) {
           queue.offer(neighbor);
           visited.add(neighbor);
-          queueIncreased = true;
+
+          deadEnd = false;
         }
       }
 
-      if (!queueIncreased) {
+      if (deadEnd) {
         traversed.remove(traversed.size() - 1);
       }
     }
@@ -128,24 +115,33 @@ public class FordFulkerson {
     return null;
   }
 
-  private Path createEdgePath(List<Integer> traversed) {
-    Integer prev = null;
+  private boolean unvisited(Set<Integer> visited, int node) {
+    return !visited.contains(node);
+  }
+
+  private Path createEdgePathFrom(List<Integer> traversed) {
+    Integer prevNode = null;
     List<Edge> edges = new ArrayList<>();
     Edge bottleneck = null;
 
-    for (Integer node : traversed) {
-      if (prev != null) {
-        Edge edge = this.Gf[prev][node];
+    int minResidualCapacity = Integer.MAX_VALUE;
+
+    for (Integer currNode : traversed) {
+      if (prevNode != null) {
+        Edge edge = this.Gf[prevNode][currNode];
         edges.add(edge);
+
+        int residualCapacity = edge.capacity() - edge.flowValue();
 
         if (bottleneck == null) {
           bottleneck = edge;
+          minResidualCapacity = residualCapacity;
         } else {
-          bottleneck = edge.residualCapacity() < bottleneck.residualCapacity() ? edge : bottleneck;
+          bottleneck = residualCapacity < minResidualCapacity ? edge : bottleneck;
         }
       }
 
-      prev = node;
+      prevNode = currNode;
     }
 
     return new Path(edges, bottleneck);
