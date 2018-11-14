@@ -33,7 +33,7 @@ public class FordFulkerson {
       for (int j = 0; j < n; j++) {
         int capacity = capacities[i][j];
         if (capacity > 0) {
-          this.Gf[i][j] = new Edge(i, j, 0, capacity, EdgeType.FORWARD);
+          this.Gf[i][j] = new Edge(i, j, capacity);
         }
       }
     }
@@ -50,22 +50,25 @@ public class FordFulkerson {
 
       // because bottleneck is min residual capacity for all edges in augmented path
       Edge bottleNeck = augmentedPath.min();
-      int flow = bottleNeck.capacity() - bottleNeck.flowValue();
+      int flow = bottleNeck.residualCapacity();
+
+      // flow must be > 0 because of line 96 and line 139
       maxFlow += flow;
 
-      // Note: edges in augmented path can either be forward or backward flows
+      // Note: edges in augmented path can either be forward or backward edges
       for (Edge edge : augmentedPath.path()) {
         // update directed edge in opposite direction
         Edge oppositeEdge = this.Gf[edge.dest()][edge.src()];
         if (oppositeEdge == null) {
           oppositeEdge = edge.opposite();
+          oppositeEdge.residualCapacity(0);
           this.Gf[edge.dest()][edge.src()] = oppositeEdge;
         }
 
         // Note: edge.capacity() must be >= flowValueSoFar because of bottleneck found
         // update edge flows both forward and backwards
-        edge.flowValue(edge.flowValue() + flow);
-        oppositeEdge.flowValue(oppositeEdge.flowValue() + flow);
+        edge.residualCapacity(edge.residualCapacity() - flow);
+        oppositeEdge.residualCapacity(oppositeEdge.residualCapacity() + flow);
       }
 
     }
@@ -79,6 +82,8 @@ public class FordFulkerson {
 
     int[] parent = new int[this.Gf.length];
     Arrays.fill(parent, -1);
+    parent[source] = source; // mark source as visited
+
     while (!queue.isEmpty()) {
       int node = queue.poll();
 
@@ -92,7 +97,7 @@ public class FordFulkerson {
         boolean unvisited = parent[neighbor] == -1;
 
         if (edgeExists && unvisited && edgeToNeighbor.hasLeftOverCapacity()) {
-          parent[neighbor] = node;
+          parent[neighbor] = node; // mark neighbors to be visited as visited to avoid adding same neighbors twice in queue
           queue.offer(neighbor);
         }
       }
@@ -104,13 +109,12 @@ public class FordFulkerson {
     int backtrack = sink;
     while (parent[backtrack] != -1) {
       traversed.add(backtrack);
-      backtrack = parent[backtrack];
-    }
+      if (backtrack == source) {
+        Collections.reverse(traversed);
+        return createEdgePathFrom(traversed);
+      }
 
-    if (backtrack == source) {
-      traversed.add(backtrack);
-      Collections.reverse(traversed);
-      return createEdgePathFrom(traversed);
+      backtrack = parent[backtrack];
     }
 
     return null;
@@ -123,12 +127,12 @@ public class FordFulkerson {
 
     int minResidualCapacity = Integer.MAX_VALUE;
 
-    for (Integer currNode : traversed) {
+    for (int currNode : traversed) {
       if (prevNode != null) {
         Edge edge = this.Gf[prevNode][currNode];
         edges.add(edge);
 
-        int residualCapacity = edge.capacity() - edge.flowValue();
+        int residualCapacity = edge.residualCapacity();
 
         if (bottleneck == null) {
           bottleneck = edge;

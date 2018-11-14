@@ -17,25 +17,21 @@ public class Edge {
 
   private int dest;
 
-  private int flowValue;
-
   private int capacity;
+
+  private int residualCapacity;
 
   private EdgeType type;
 
   public Edge(int src, int dest, int capacity) {
-    this(src, dest, 0, capacity);
+    this(src, dest, capacity, capacity, EdgeType.FORWARD);
   }
 
-  public Edge(int src, int dest, int flowValue, int capacity) {
-    this(src, dest, flowValue, capacity, EdgeType.FORWARD);
-  }
-
-  public Edge(int src, int dest, int flowValue, int capacity, EdgeType type) {
+  public Edge(int src, int dest, int capacity, int residualCapacity, EdgeType type) {
     this.src = src;
     this.dest = dest;
-    this.flowValue = flowValue;
     this.capacity = capacity;
+    this.residualCapacity = residualCapacity;
     this.type = type;
   }
 
@@ -55,14 +51,6 @@ public class Edge {
     this.dest = dest;
   }
 
-  public int flowValue() {
-    return flowValue;
-  }
-
-  public void flowValue(int flowValue) {
-    this.flowValue = flowValue;
-  }
-
   public int capacity() {
     return capacity;
   }
@@ -80,20 +68,28 @@ public class Edge {
   }
 
   public boolean hasLeftOverCapacity() {
-    return this.flowValue < this.capacity;
+    return this.residualCapacity > 0;
   }
 
   public Edge opposite() {
     return new Edge(
-        this.dest(),
-        this.src(),
-        this.flowValue,
-        this.capacity(),
+        this.dest,
+        this.src,
+        this.capacity,
+        this.residualCapacity,
         this.type == EdgeType.FORWARD ? EdgeType.BACKWARD : EdgeType.FORWARD
     );
   }
 
   public String toString() {
     return this.src + "->" +  this.dest;
+  }
+
+  public int residualCapacity() {
+    return residualCapacity;
+  }
+
+  public void residualCapacity(int residualCapacity) {
+    this.residualCapacity = residualCapacity;
   }
 }
