@@ -110,7 +110,6 @@ public class FordFulkerson {
     while (parent[backtrack] != -1) {
       traversed.add(backtrack);
       if (backtrack == source) {
-        Collections.reverse(traversed);
         return createEdgePathFrom(traversed);
       }
 
@@ -126,8 +125,9 @@ public class FordFulkerson {
     Edge bottleneck = null;
 
     int minResidualCapacity = Integer.MAX_VALUE;
-
-    for (int currNode : traversed) {
+    int n = traversed.size();
+    for (int i = n - 1; i >= 0; i--) {
+      int currNode = traversed.get(i);
       if (prevNode != null) {
         Edge edge = this.Gf[prevNode][currNode];
         edges.add(edge);
